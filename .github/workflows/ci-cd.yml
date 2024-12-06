@@ -57,4 +57,4 @@ jobs:
         env:
           HOST: ${{ secrets.HOST }}
           USER: ${{ secrets.USER }}
-          SSH_KEY: ${{ secrets.SSH_K
+          SSH_KEY: ${{ secrets.SSH_KEY }}
