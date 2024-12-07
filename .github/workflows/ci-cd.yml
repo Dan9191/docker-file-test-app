@@ -39,22 +39,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Add SSH key to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${HOST} >> ~/.ssh/known_hosts
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.PRIVATE_KEY }}
 
-      - name: Deploy application
+      - name: Copy files to VPS
         run: |
-          echo "${SSH_KEY}" > key.pem
-          chmod 600 key.pem
-          ssh -i key.pem ${USER}@${HOST} "pkill -f ${APP_NAME} || true"
-          scp -i key.pem build/libs/*.jar ${USER}@${HOST}:/home/${USER}/${APP_NAME}
-          ssh -i key.pem ${USER}@${HOST} "nohup java -jar /home/${USER}/${APP_NAME} &"
-        env:
-          HOST: ${{ secrets.HOST }}
-          USER: ${{ secrets.USER }}
-          SSH_KEY: ${{ secrets.SSH_KEY }}
+          scp -r ./* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}
+
+      - name: Restart application
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd ${{ secrets.VPS_DEPLOY_PATH }}
+          pkill -f 'java -jar' || true
+          nohup java -jar your-app.jar > app.log 2>&1 &
+          EOF
