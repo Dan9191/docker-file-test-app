@@ -1,10 +1,7 @@
-name: CI/CD for Spring Boot App using Gradle
+name: Build, Test and Deploy to Remote Server
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -13,50 +10,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
+      - name: Set up Gradle
+        uses: gradle/wrapper-validation-action@v1
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: chmod for Gradle Wrapper
-        run: chmod +x ./gradlew
+          gradle-version: '8.0'
 
       - name: Build project
-        run: ./gradlew build
+        run: ./gradlew build --no-daemon
 
-      - name: Run tests
-        run: ./gradlew test
-  deploy:
+  test:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
-#      - name: Add SSH key to known_hosts
-#        run: |
-#          mkdir -p ~/.ssh
-#          ssh-keyscan -H ${HOST} >> ~/.ssh/known_hosts
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
 
-      - name: Deploy to VPS
-        env:
-          HOST: ${{ secrets.VPS_HOST }}
-          USER: ${{ secrets.VPS_USER }}
-          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
-          APP_NAME: "docker-file-test-app-0.0.1-SNAPSHOT.jar"
+      - name: Set up Gradle
+        uses: gradle/wrapper-validation-action@v1
+        with:
+          gradle-version: '8.0'
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/wrapper-validation-action@v1
+        with:
+          gradle-version: '8.0'
+
+      - name: Build the project (again for deploy)
+        run: ./gradlew build --no-daemon
+
+      - name: Copy files to remote server
         run: |
-          echo "${SSH_KEY}" > key.pem
-          chmod 600 key.pem
-          ssh -i key.pem ${USER}@${HOST} "pkill -f ${APP_NAME} || true"
-          scp -i key.pem build/libs/*.jar ${USER}@${HOST}:/home/${USER}/${APP_NAME}
-          ssh -i key.pem ${USER}@${HOST} "nohup java -jar /home/${USER}/${APP_NAME} &"
+          scp -i ${{ secrets.DEPLOY_KEY }} build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar root@45.9.40.117:/root/testCd/
+
+      - name: SSH into remote server and restart the app
+        run: |
+          ssh -i ${{ secrets.DEPLOY_KEY }} root@45.9.40.117 'sudo systemctl restart your-app.service'
