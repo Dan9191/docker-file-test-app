@@ -16,11 +16,14 @@ jobs:
       #  чтобы ваш рабочий процесс мог получить к нему доступ.
       - uses: actions/checkout@v3
 
-      # Насройки среды выполнения для java
+      # Настройки java
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
 
       # Права на запуск gradlew
       - name: chmod for Gradle Wrapper
@@ -42,6 +45,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+
       - name: chmod for Gradle Wrapper
         run: chmod +x ./gradlew
 
@@ -59,6 +65,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
 
       - name: chmod for Gradle Wrapper
         run: chmod +x ./gradlew
