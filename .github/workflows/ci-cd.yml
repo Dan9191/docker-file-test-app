@@ -44,8 +44,8 @@ jobs:
         env:
           HOST: ${{ secrets.VPS_HOST }}
           USER: ${{ secrets.VPS_USER }}
-          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          APP_NAME: "spring-app.jar"
+          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
+          APP_NAME: "docker-file-test-app-0.0.1-SNAPSHOT.jar"
         run: |
           echo "${SSH_KEY}" > key.pem
           chmod 600 key.pem
