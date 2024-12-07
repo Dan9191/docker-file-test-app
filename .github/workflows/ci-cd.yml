@@ -83,13 +83,13 @@ jobs:
 
       - name: kill old app
         run: |
-          ssh -o StrictHostKeyChecking=no root@45.9.40.117 'pkill -f docker-file-test-app-0.0.1-SNAPSHOT.jar'
+          ssh -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=no root@45.9.40.117 'pkill -f docker-file-test-app-0.0.1-SNAPSHOT.jar'
 
       - name: Copy files to remote server
         run: |
-          scp -o StrictHostKeyChecking=no build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar root@45.9.40.117:testCd/
+          scp -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=no build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar root@45.9.40.117:testCd/
 
       - name: run new app
         run: |
-          ssh -o StrictHostKeyChecking=no root@45.9.40.117 'nohup java -jar testCd/docker-file-test-app-0.0.1-SNAPSHOT.jar > app.log 2>&1'
+          ssh -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=no root@45.9.40.117 'nohup java -jar testCd/docker-file-test-app-0.0.1-SNAPSHOT.jar > app.log 2>&1'
 
