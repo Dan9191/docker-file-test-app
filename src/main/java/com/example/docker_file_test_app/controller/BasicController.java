@@ -9,7 +9,7 @@ public class BasicController {
 
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("message", "Тестовая страница");
+        model.addAttribute("message", "тоже тестовая страница");
         return "index";
     }
 }
