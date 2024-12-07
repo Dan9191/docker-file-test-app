@@ -40,15 +40,22 @@ jobs:
     needs: build
 
     steps:
-      - name: Deploy to VPS
-        env:
-          HOST: ${{ secrets.VPS_HOST }}
-          USER: ${{ secrets.VPS_USER }}
-          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
-          APP_NAME: "docker-file-test-app-0.0.1-SNAPSHOT.jar"
-        run: |
-          echo "${SSH_KEY}" > key.pem
-          chmod 600 key.pem
-          ssh -i key.pem ${USER}@${HOST} "pkill -f ${APP_NAME} || true"
-          scp -i key.pem build/libs/*.jar ${USER}@${HOST}:/home/${USER}/${APP_NAME}
-          ssh -i key.pem ${USER}@${HOST} "nohup java -jar /home/${USER}/${APP_NAME} &"
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+  - name: Copy files to VPS
+    run: |
+      scp -r ./* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}
+
+  - name: Restart application
+    run: |
+      ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+      cd ${{ secrets.VPS_DEPLOY_PATH }}
+      pkill -f 'java -jar' || true
+      nohup java -jar docker-file-test-app-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+      EOF
