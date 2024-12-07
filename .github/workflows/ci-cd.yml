@@ -81,15 +81,20 @@ jobs:
       - name: Build the project (again for deploy)
         run: ./gradlew build --no-daemon
 
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
       - name: kill old app
         run: |
-          ssh -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=no root@45.9.40.117 'pkill -f docker-file-test-app-0.0.1-SNAPSHOT.jar'
+          ssh -o StrictHostKeyChecking=no root@45.9.40.117 'pkill -f docker-file-test-app-0.0.1-SNAPSHOT.jar'
 
       - name: Copy files to remote server
         run: |
-          scp -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=no build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar root@45.9.40.117:testCd/
+          scp -o StrictHostKeyChecking=no build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar root@45.9.40.117:testCd/
 
       - name: run new app
         run: |
-          ssh -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=no root@45.9.40.117 'nohup java -jar testCd/docker-file-test-app-0.0.1-SNAPSHOT.jar > app.log 2>&1'
+          ssh -o StrictHostKeyChecking=no root@45.9.40.117 'nohup java -jar testCd/docker-file-test-app-0.0.1-SNAPSHOT.jar > app.log 2>&1'
 
