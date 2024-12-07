@@ -39,22 +39,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.PRIVATE_KEY }}
-
-      - name: Copy files to VPS
+      - name: Set up SSH for Deploy Key
         run: |
-          scp -r ./* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}
+          mkdir -p ~/.ssh
+          echo "${{ secrets.deploy_key }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -T git@github.com
 
-      - name: Restart application
+      - name: Deploy to server
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-          cd ${{ secrets.VPS_DEPLOY_PATH }}
-          pkill -f 'java -jar' || true
-          nohup java -jar your-app.jar > app.log 2>&1 &
-          EOF
+          ssh -i ~/.ssh/deploy_key root@45.9.40.117 "cd ~/myApp && git pull origin main && ./deploy-script.sh"
