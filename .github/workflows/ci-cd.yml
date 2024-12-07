@@ -75,6 +75,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: chmod for Gradle Wrapper
+        run: chmod +x ./gradlew
+
       - name: Build the project (again for deploy)
         run: ./gradlew build --no-daemon
 
