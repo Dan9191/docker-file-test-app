@@ -83,7 +83,7 @@ jobs:
 
       - name: Copy files to remote server
         run: |
-          scp -i ${{ secrets.DEPLOY_KEY }} build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar root@45.9.40.117:/testCd/
+          scp -i ${{ secrets.DEPLOY_KEY }} build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar root@45.9.40.117:build/libs/
 
       - name: SSH into remote server and restart the app
         run: |
