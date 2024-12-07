@@ -1,5 +1,6 @@
 name: Build, Test and Deploy to Remote Server
 
+# Триггер для запуска пайплайна
 on:
   push:
     branches:
@@ -7,26 +8,25 @@ on:
 
 jobs:
   build:
+    # Задача запускается на ОС ubuntu
     runs-on: ubuntu-latest
 
     steps:
+      # Это действие извлекает ваш репозиторий из папки $GITHUB_WORKSPACE,
+      #  чтобы ваш рабочий процесс мог получить к нему доступ.
       - uses: actions/checkout@v3
+
+      # Насройки среды выполнения для java
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
+      # Права на запуск gradlew
       - name: chmod for Gradle Wrapper
         run: chmod +x ./gradlew
 
+      # билд проекта
       - name: Build project
         run: ./gradlew build
 
@@ -42,17 +42,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: chmod for Gradle Wrapper
         run: chmod +x ./gradlew
 
+      # Тест проекта
       - name: Run tests
         run: ./gradlew test
 
@@ -66,14 +59,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: chmod for Gradle Wrapper
         run: chmod +x ./gradlew
