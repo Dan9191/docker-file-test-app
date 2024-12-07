@@ -40,18 +40,22 @@ jobs:
     needs: build
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-
-      - name: Restart application
+      - name: Add SSH key to known_hosts
+          run: |
+            mkdir -p ~/.ssh
+            ssh-keyscan -H ${HOST} >> ~/.ssh/known_hosts
+      - name: Deploy to VPS
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
+          APP_NAME: "docker-file-test-app-0.0.1-SNAPSHOT.jar"
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
-          cd ${{ secrets.VPS_DEPLOY_PATH }}
-          pkill -f 'docker-file-test-app-0.0.1-SNAPSHOT.jar' || true
-          git pull
-          nohup java -jar build/libs/docker-file-test-app-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+          echo "${SSH_KEY}" > key.pem
+          chmod 600 key.pem
+          ssh -i key.pem ${USER}@${HOST} "pkill -f ${APP_NAME} || true"
+          scp -i key.pem build/libs/*.jar ${USER}@${HOST}:/home/${USER}/${APP_NAME}
+          ssh -i key.pem ${USER}@${HOST} "nohup java -jar /home/${USER}/${APP_NAME} &"
